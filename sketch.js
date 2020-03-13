@@ -1,5 +1,5 @@
-const GRID_SIZE = 1000;
-const CELL_SIZE = 5;
+const GRID_SIZE = 800;
+const CELL_SIZE = 10;
 const FRAME_RATE = 60;
 
 let currentGen;
@@ -24,6 +24,22 @@ function parse2DArray(fn) {
     }
 }
 
+function countAliveNeighbors(grid, x, y) {
+    let aliveNeighbors = 0;
+    const cellValue = grid[x][y];
+
+    for (let i = -1; i < 2; i++) {
+        for (let j = -1; j < 2; j++) {
+            const col = (x + i + columns) % columns;
+            const row = (y + j + rows) % rows;
+
+            aliveNeighbors += grid[col][row];
+        }
+    }
+    aliveNeighbors -= cellValue;
+    return aliveNeighbors;
+}
+
 function setup2DArray(columns, rows) {
     const array = new Array(columns);
 
@@ -31,6 +47,32 @@ function setup2DArray(columns, rows) {
         array[i] = new Array(rows).fill(0);
     }
     return array;
+}
+
+function getNextGen(currentGen) {
+    let nextGen = setup2DArray(columns, rows);
+
+    parse2DArray((i, j) => {
+        const cellValue = currentGen[i][j];
+
+        const aliveNeighbors = countAliveNeighbors(currentGen, i, j);
+
+        if (cellValue === 1) {
+            if (aliveNeighbors < 2 || aliveNeighbors > 3) {
+                nextGen[i][j] = 0;
+            } else {
+                nextGen[i][j] = 1;
+            }
+        } else {
+            if (aliveNeighbors === 3) {
+                nextGen[i][j] = 1;
+            } else {
+                nextGen[i][j] = 0;
+            }
+        }
+    });
+
+    return nextGen;
 }
 
 function setup() {
@@ -46,6 +88,10 @@ function setup() {
 function draw() {
     background(0);
     frameRate(FRAME_RATE);
+
+    const nextGen = getNextGen(currentGen);
+
+    currentGen = nextGen;
 
     parse2DArray((i, j) => {
         const x = i * CELL_SIZE;
